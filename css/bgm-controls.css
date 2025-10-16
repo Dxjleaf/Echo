@@ -1,0 +1,177 @@
+/* BGM控制样式 */
+.bgm-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.bgm-toggle {
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(79, 195, 247, 0.9);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+}
+
+.bgm-toggle:hover {
+    background: rgba(79, 195, 247, 1);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(79, 195, 247, 0.5);
+}
+
+.bgm-toggle:active {
+    transform: scale(0.95);
+}
+
+.bgm-toggle.muted {
+    background: rgba(255, 107, 107, 0.9);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.bgm-toggle.muted:hover {
+    background: rgba(255, 107, 107, 1);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+}
+
+.bgm-volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(10, 10, 42, 0.9);
+    padding: 10px 15px;
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(79, 195, 247, 0.3);
+    transition: all 0.3s ease;
+}
+
+.bgm-volume-control.hidden {
+    opacity: 0;
+    transform: translateX(20px);
+    pointer-events: none;
+}
+
+.bgm-volume-control:not(.hidden) {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+#bgm-volume-slider {
+    width: 100px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+
+#bgm-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #4fc3f7;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(79, 195, 247, 0.4);
+    transition: all 0.2s ease;
+}
+
+#bgm-volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 8px rgba(79, 195, 247, 0.6);
+}
+
+#bgm-volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #4fc3f7;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(79, 195, 247, 0.4);
+    transition: all 0.2s ease;
+}
+
+#bgm-volume-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 8px rgba(79, 195, 247, 0.6);
+}
+
+#bgm-volume-text {
+    color: #4fc3f7;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 35px;
+    text-align: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .bgm-controls {
+        top: 10px;
+        right: 10px;
+    }
+    
+    .bgm-toggle {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .bgm-volume-control {
+        padding: 8px 12px;
+    }
+    
+    #bgm-volume-slider {
+        width: 80px;
+    }
+}
+
+/* 语言切换按钮样式 */
+.language-controls {
+    position: fixed;
+    top: 70px; /* 在BGM控制按钮下方 */
+    right: 20px;
+    z-index: 100;
+}
+
+.language-toggle {
+    background: rgba(79, 195, 247, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    color: white;
+    font-size: 1.2em;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.language-toggle:hover {
+    background: rgba(79, 195, 247, 1);
+    transform: scale(1.05);
+}
+
+.language-toggle.english {
+    background: rgba(255, 193, 7, 0.7); /* 英文模式用黄色 */
+}
+
+.language-toggle.english:hover {
+    background: rgba(255, 193, 7, 1);
+}

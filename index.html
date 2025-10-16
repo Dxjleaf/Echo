@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深空回响 - Echo Chamber</title>
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="js/core/DialogueSystem.js" as="script">
+    <link rel="preload" href="js/core/GameManager.js" as="script">
+    
+    <!-- 关键CSS内联 -->
+    <style>
+        /* 关键样式 - 内联以提升首屏渲染速度 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            height: 100%; 
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a; 
+            color: #ffffff; 
+            overflow: hidden; 
+        }
+        .hidden { display: none !important; }
+        #loading-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0f172a; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 1000; 
+        }
+        .loading-percentage { margin: 20px auto; text-align: center; }
+        .loading-percentage span { 
+            color: #6366f1; font-size: 2rem; font-weight: bold; 
+            text-shadow: 0 0 10px rgba(99, 102, 241, 0.8); 
+            animation: pulse 2s ease-in-out infinite; 
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    </style>
+    
+    <!-- 样式文件 -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dialogue.css">
+    <link rel="stylesheet" href="css/background.css">
+    <link rel="stylesheet" href="css/continuous-sense.css">
+    <link rel="stylesheet" href="css/bgm-controls.css">
+    
+    <!-- 字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- 背景音乐 -->
+    <audio id="bgm-audio" loop>
+        <source src="Punch Deck - Ethereal.mp3" type="audio/mpeg">
+    </audio>
+    
+</head>
+<body>
+    <!-- 背景系统 -->
+    <div id="background-container">
+        <div id="background-overlay"></div>
+        <div id="glitch-effect"></div>
+    </div>
+
+    <!-- 主游戏界面 -->
+    <div id="game-container">
+
+        <!-- 对话系统 -->
+        <div id="dialogue-container" class="hidden">
+            <!-- 说话者名称 -->
+            <div id="speaker-name" class="speaker-name"></div>
+            
+            <!-- 对话文本 -->
+            <div id="dialogue-text" class="dialogue-text"></div>
+            
+            <!-- 玩家回复（字幕样式） -->
+            <div id="player-response" class="player-response hidden"></div>
+        </div>
+
+        <!-- 选择系统 -->
+        <div id="choices-container" class="choices-container hidden">
+            <div id="choices-panel" class="choices-panel"></div>
+        </div>
+
+        <!-- BGM控制按钮 -->
+        <div id="bgm-controls" class="bgm-controls">
+            <button id="bgm-toggle" class="bgm-toggle" title="背景音乐开关">🎵</button>
+            <div id="bgm-volume-control" class="bgm-volume-control hidden">
+                <input type="range" id="bgm-volume-slider" min="0" max="100" value="30" title="音量控制">
+                <span id="bgm-volume-text">30%</span>
+            </div>
+        </div>
+
+        <!-- 语言切换按钮 -->
+        <div id="language-controls" class="language-controls">
+            <button id="language-toggle" class="language-toggle" title="语言切换">🌐</button>
+        </div>
+
+        <!-- 设置面板 -->
+        <div id="settings-panel" class="settings-panel hidden">
+            <div class="settings-content">
+                <h3>设置</h3>
+                
+                <div class="setting-group">
+                    <label>文本速度</label>
+                    <input type="range" id="text-speed" min="0.01" max="0.2" step="0.01" value="0.05">
+                    <span id="speed-value">0.05</span>
+                </div>
+                
+                <div class="setting-group">
+                    <label>音乐音量</label>
+                    <input type="range" id="music-volume" min="0" max="1" step="0.1" value="0.7">
+                    <span id="music-value">0.7</span>
+                </div>
+                
+                <div class="setting-group">
+                    <label>音效音量</label>
+                    <input type="range" id="sfx-volume" min="0" max="1" step="0.1" value="0.8">
+                    <span id="sfx-value">0.8</span>
+                </div>
+                
+                <div class="setting-buttons">
+                    <button id="save-settings">保存</button>
+                    <button id="close-settings">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载提示 -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="loading-content">
+                <h2>深空回响</h2>
+                <p id="loading-text">正在初始化系统...</p>
+                <div class="loading-percentage">
+                    <span id="loading-percentage">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音频元素 -->
+    <audio id="background-music" loop></audio>
+    <audio id="typewriter-sound" src="medium-text-blip-14855.mp3" preload="auto"></audio>
+    <audio id="glitch-sound"></audio>
+    <audio id="dialogue-advance-sound"></audio>
+    <audio id="cycle-complete-sound"></audio>
+
+    <!-- 核心游戏脚本 - 同步加载 -->
+    <script src="js/utils/ColorUtils.js"></script>
+    <script src="js/core/GameManager.js"></script>
+    <script src="js/core/DialogueSystem.js"></script>
+    <script src="js/core/BackgroundSystem.js"></script>
+    <script src="js/core/SimpleSenseSystem.js"></script>
+    <script src="js/core/BGMManager.js"></script>
+    <script src="js/story/EnhancedDeepSkyScript.js"></script>
+    <script src="js/story/EnhancedDeepSkyScript_EN.js"></script>
+    <script src="js/story/StoryManager.js"></script>
+    
+    <!-- 非关键脚本 - 异步加载 -->
+    <script async src="js/utils/SmartColorAdapter.js"></script>
+    <script async src="js/utils/ResourceOptimizer.js"></script>
+    
+    <!-- 主启动脚本 -->
+    <script>
+        // 淡入五感系统
+        function fadeInSenses() {
+            console.log('👁️ 开始淡入五感系统...');
+            
+            // 获取五感容器
+            const sensesContainer = document.getElementById('persistent-senses-container');
+            if (sensesContainer) {
+                // 初始状态：透明
+                sensesContainer.style.opacity = '0';
+                sensesContainer.style.transform = 'translateX(-50%) translateY(-20px)';
+                sensesContainer.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                
+                // 延迟淡入
+                setTimeout(() => {
+                    sensesContainer.style.opacity = '1';
+                    sensesContainer.style.transform = 'translateX(-50%) translateY(0)';
+                    console.log('✅ 五感系统淡入完成');
+                }, 200);
+            }
+        }
+
+        // 背景颜色过渡
+        function startBackgroundTransition() {
+            console.log('🎨 开始背景颜色过渡...');
+            const body = document.body;
+            const gameContainer = document.getElementById('game-container');
+            
+            if (body && gameContainer) {
+                // 设置初始背景色（深色）
+                body.style.background = '#1a1a1a';
+                gameContainer.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)';
+                
+                // 添加过渡效果
+                body.style.transition = 'background 2s ease-in-out';
+                gameContainer.style.transition = 'background 2s ease-in-out';
+                
+                // 延迟过渡到游戏背景色
+                setTimeout(() => {
+                    body.style.background = '#0f0f0f';
+                    gameContainer.style.background = 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2d2d2d 100%)';
+                    console.log('✅ 背景颜色过渡完成');
+                }, 500);
+            }
+        }
+
+        // 游戏启动
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 深空回响 - 正在启动...');
+            
+            // 获取加载相关元素
+            const loadingText = document.getElementById('loading-text');
+            
+            console.log('🔍 调试信息:');
+            console.log('loadingText:', loadingText);
+            
+            // 更新加载进度
+            function updateProgress(step, total, message) {
+                const percentage = (step / total) * 100;
+                console.log(`📊 更新进度: ${step}/${total} (${Math.round(percentage)}%) - ${message}`);
+                
+                // 更新百分比文本
+                const percentageElement = document.getElementById('loading-percentage');
+                if (percentageElement) {
+                    percentageElement.textContent = Math.round(percentage) + '%'; 
+                    console.log('✅ 百分比文本已更新:', Math.round(percentage) + '%');
+                } else {
+                    console.error('❌ loading-percentage元素未找到');
+                }
+                
+                if (loadingText) {
+                    loadingText.textContent = message;
+                    console.log('✅ 文本已更新:', message);
+                } else {
+                    console.error('❌ loadingText元素未找到');
+                }
+            }
+            
+            // 立即测试进度更新
+            updateProgress(0, 11, '开始初始化...');
+            
+            try {
+                // 简化初始化过程
+                updateProgress(1, 11, '正在加载模块...');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                updateProgress(2, 11, '正在初始化游戏管理器...');
+                console.log('📋 正在初始化 GameManager...');
+                try {
+                    if (typeof GameManager !== 'undefined') {
+                        await GameManager.initialize();
+                        console.log('✅ GameManager 初始化完成');
+                    } else {
+                        console.error('❌ GameManager 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ GameManager 初始化失败:', error);
+                }
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                updateProgress(3, 11, '正在初始化对话系统...');
+                console.log('💬 正在初始化 DialogueSystem...');
+                try {
+                    if (typeof DialogueSystem !== 'undefined') {
+                        await DialogueSystem.initialize();
+                        console.log('✅ DialogueSystem 初始化完成');
+                    } else {
+                        console.error('❌ DialogueSystem 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ DialogueSystem 初始化失败:', error);
+                }
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                updateProgress(4, 11, '正在初始化背景系统...');
+                console.log('🎨 正在初始化 BackgroundSystem...');
+                try {
+                    if (typeof BackgroundSystem !== 'undefined') {
+                        await BackgroundSystem.initialize();
+                        console.log('✅ BackgroundSystem 初始化完成');
+                    } else {
+                        console.error('❌ BackgroundSystem 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ BackgroundSystem 初始化失败:', error);
+                }
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                updateProgress(5, 11, '正在初始化五感系统...');
+                console.log('👁️ 正在初始化 SimpleSenseSystem...');
+                try {
+                    if (typeof SimpleSenseSystem !== 'undefined') {
+                        SimpleSenseSystem.initialize();
+                        console.log('✅ SimpleSenseSystem 初始化完成');
+                    } else {
+                        console.error('❌ SimpleSenseSystem 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ SimpleSenseSystem 初始化失败:', error);
+                }
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // TextEffectManager 已删除
+                
+                updateProgress(6, 11, '正在初始化智能颜色适配系统...');
+                console.log('🎨 正在初始化 SmartColorAdapter...');
+                try {
+                    if (typeof SmartColorAdapter !== 'undefined') {
+                        await SmartColorAdapter.initialize();
+                        console.log('✅ SmartColorAdapter 初始化完成');
+                    } else {
+                        console.error('❌ SmartColorAdapter 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ SmartColorAdapter 初始化失败:', error);
+                }
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                updateProgress(7, 11, '正在初始化淡入文字系统...');
+                console.log('✨ 正在初始化 FadeTextSystem...');
+                try {
+                    if (typeof FadeTextSystem !== 'undefined') {
+                        await FadeTextSystem.initialize();
+                        console.log('✅ FadeTextSystem 初始化完成');
+                    } else {
+                        console.error('❌ FadeTextSystem 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ FadeTextSystem 初始化失败:', error);
+                }
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                updateProgress(8, 11, '正在启动游戏...');
+                console.log('🎮 正在启动游戏...');
+                
+                // 延迟初始化非关键系统
+                setTimeout(async () => {
+                    try {
+                        if (typeof ResourceOptimizer !== 'undefined') {
+                            await ResourceOptimizer.initialize();
+                            console.log('✅ ResourceOptimizer 延迟初始化完成');
+                        }
+                    } catch (error) {
+                        console.log('⚠️ 非关键系统延迟初始化失败:', error);
+                    }
+                }, 1000);
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // RuntimeDialogues 已删除，直接使用 EnhancedDeepSkyScript
+                
+                updateProgress(10, 11, '正在初始化剧情系统...');
+                console.log('📖 正在初始化 StoryManager...');
+                try {
+                    if (typeof StoryManager !== 'undefined') {
+                        await StoryManager.initialize();
+                        console.log('✅ StoryManager 初始化完成');
+                    } else {
+                        console.error('❌ StoryManager 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ StoryManager 初始化失败:', error);
+                }
+                
+                updateProgress(11, 11, '正在初始化背景音乐...');
+                console.log('🎵 正在初始化 BGMManager...');
+                try {
+                    if (typeof BGMManager !== 'undefined') {
+                        BGMManager.initialize();
+                        console.log('✅ BGMManager 初始化完成');
+                    } else {
+                        console.error('❌ BGMManager 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ BGMManager 初始化失败:', error);
+                }
+                
+                // 初始化五感显示
+                updateProgress(9, 9, '正在初始化五感系统...');
+                console.log('👁️ 正在初始化五感显示...');
+                try {
+                    // 初始化持续显示五感系统
+                    if (typeof SimpleSenseSystem !== 'undefined') {
+                        SimpleSenseSystem.initialize();
+                        console.log('✅ 持续显示五感系统初始化完成');
+                    }
+                    
+                    if (typeof StoryManager !== 'undefined') {
+                        StoryManager.initializeSenses();
+                        console.log('✅ 五感系统初始化完成');
+                    }
+                } catch (error) {
+                    console.error('❌ 五感系统初始化失败:', error);
+                }
+                
+                // 完成初始化
+                updateProgress(11, 11, '初始化完成，正在启动游戏...');
+                
+                // 短暂延迟后隐藏加载屏幕
+                setTimeout(() => {
+                    const loadingScreen = document.getElementById('loading-screen');
+                    if (loadingScreen) {
+                        loadingScreen.classList.add('hidden');
+                        console.log('🎮 加载屏幕已隐藏');
+                    }
+                    
+                    // 开始背景颜色过渡
+                    startBackgroundTransition();
+                    
+                    // 延迟启动游戏，让界面先淡入
+                    setTimeout(() => {
+                        console.log('✅ 所有系统初始化完成');
+                        
+                // 启动背景音乐
+                if (typeof BGMManager !== 'undefined') {
+                    BGMManager.startBGM();
+                    console.log('🎵 背景音乐已启动');
+                    
+                    // 初始化BGM控制（在音乐启动后）
+                    initializeBGMControls();
+                    
+                    // 初始化语言切换
+                    initializeLanguageControls();
+                }
+                        
+                        if (typeof StoryManager !== 'undefined') {
+                            // 先淡入五感系统
+                            fadeInSenses();
+                            
+                            // 延迟启动对话
+                            setTimeout(() => {
+                                StoryManager.startGame();
+                                console.log('🎯 游戏已开始');
+                            }, 1000);
+                        } else {
+                            console.error('❌ StoryManager 未找到');
+                        }
+                    }, 800);
+                }, 500);
+                
+            } catch (error) {
+                console.error('❌ 游戏启动失败:', error);
+                console.error('错误详情:', error.stack);
+                
+                const loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.innerHTML = 
+                        '<div class="error-content"><h2>启动失败</h2><p>错误: ' + error.message + '</p><p>请刷新页面重试</p></div>';
+                }
+            }
+        });
+        
+        // 初始化BGM控制
+        function initializeBGMControls() {
+            const bgmToggle = document.getElementById('bgm-toggle');
+            const bgmVolumeControl = document.getElementById('bgm-volume-control');
+            const bgmVolumeSlider = document.getElementById('bgm-volume-slider');
+            const bgmVolumeText = document.getElementById('bgm-volume-text');
+            
+            if (!bgmToggle || !bgmVolumeControl || !bgmVolumeSlider || !bgmVolumeText) {
+                console.warn('BGM控制元素未找到');
+                return;
+            }
+            
+            // 切换BGM播放/暂停
+            bgmToggle.addEventListener('click', () => {
+                if (BGMManager.isPlaying) {
+                    BGMManager.pauseBGM();
+                    bgmToggle.classList.add('muted');
+                    bgmToggle.textContent = '🔇';
+                } else {
+                    BGMManager.resumeBGM();
+                    bgmToggle.classList.remove('muted');
+                    bgmToggle.textContent = '🎵';
+                }
+            });
+            
+            // 音量控制
+            bgmVolumeSlider.addEventListener('input', (e) => {
+                const volume = parseInt(e.target.value) / 100;
+                BGMManager.setVolume(volume);
+                bgmVolumeText.textContent = e.target.value + '%';
+            });
+            
+            // 显示/隐藏音量控制
+            bgmToggle.addEventListener('mouseenter', () => {
+                bgmVolumeControl.classList.remove('hidden');
+            });
+            
+            bgmVolumeControl.addEventListener('mouseleave', () => {
+                bgmVolumeControl.classList.add('hidden');
+            });
+            
+            // 初始化状态 - 默认显示音乐开启状态
+            bgmToggle.classList.remove('muted');
+            bgmToggle.textContent = '🎵';
+            
+            // 设置状态变化回调
+            BGMManager.onStateChange = (isPlaying) => {
+                if (isPlaying) {
+                    bgmToggle.classList.remove('muted');
+                    bgmToggle.textContent = '🎵';
+                    console.log('🎵 BGM控制：音乐开始播放，显示开启状态');
+                } else {
+                    bgmToggle.classList.add('muted');
+                    bgmToggle.textContent = '🔇';
+                    console.log('🎵 BGM控制：音乐停止播放，显示关闭状态');
+                }
+            };
+            
+            // 立即检查当前状态
+            if (!BGMManager.isPlaying) {
+                bgmToggle.classList.add('muted');
+                bgmToggle.textContent = '🔇';
+            }
+            
+            console.log('🎵 BGM控制初始化完成');
+        }
+
+        // 语言切换控制
+        function initializeLanguageControls() {
+            const languageToggle = document.getElementById('language-toggle');
+            
+            if (!languageToggle) {
+                console.warn('语言切换元素未找到');
+                return;
+            }
+            
+            // 获取当前语言设置（默认中文）
+            let currentLanguage = localStorage.getItem('gameLanguage') || 'zh';
+            
+            // 设置初始状态
+            updateLanguageButton(currentLanguage);
+            
+            // 切换语言
+            languageToggle.addEventListener('click', () => {
+                currentLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
+                localStorage.setItem('gameLanguage', currentLanguage);
+                updateLanguageButton(currentLanguage);
+                switchLanguage(currentLanguage);
+                console.log(`🌐 语言已切换到: ${currentLanguage === 'zh' ? '中文' : 'English'}`);
+            });
+            
+            console.log('🌐 语言切换控制初始化完成');
+        }
+        
+        // 更新语言按钮状态
+        function updateLanguageButton(language) {
+            const languageToggle = document.getElementById('language-toggle');
+            if (language === 'en') {
+                languageToggle.classList.add('english');
+                languageToggle.textContent = '🇺🇸';
+                languageToggle.title = 'Switch to Chinese';
+            } else {
+                languageToggle.classList.remove('english');
+                languageToggle.textContent = '🌐';
+                languageToggle.title = 'Switch to English';
+            }
+        }
+        
+        // 切换语言
+        function switchLanguage(language) {
+            if (language === 'en') {
+                // 切换到英文
+                if (typeof EnhancedDeepSkyScript_EN !== 'undefined') {
+                    // 替换StoryManager中的脚本引用
+                    window.EnhancedDeepSkyScript = EnhancedDeepSkyScript_EN;
+                    console.log('🌐 已切换到英文脚本');
+                } else {
+                    console.warn('英文脚本未加载');
+                }
+            } else {
+                // 切换到中文
+                if (typeof window.OriginalEnhancedDeepSkyScript !== 'undefined') {
+                    window.EnhancedDeepSkyScript = window.OriginalEnhancedDeepSkyScript;
+                } else {
+                    // 重新加载中文脚本
+                    location.reload();
+                }
+                console.log('🌐 已切换到中文脚本');
+            }
+        }
+        
+        // 保存原始中文脚本引用
+        window.addEventListener('load', () => {
+            if (typeof EnhancedDeepSkyScript !== 'undefined') {
+                window.OriginalEnhancedDeepSkyScript = EnhancedDeepSkyScript;
+            }
+        });
+    </script>
+</body>
+</html>
