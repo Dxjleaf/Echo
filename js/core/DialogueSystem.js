@@ -77,7 +77,7 @@ class DialogueSystem {
         let targetBottom;
         if (expandedSenses.length === 0) {
             // 没有展开的描述框，使用默认位置
-            targetBottom = isSmallMobile ? 35 : 40;
+            targetBottom = isSmallMobile ? 40 : 45;
         } else {
             // 计算最下方的展开描述框位置
             let maxBottomPosition = 0;
@@ -89,7 +89,7 @@ class DialogueSystem {
             
             // 动态调整对话位置，确保不被遮挡
             const safeDistance = isSmallMobile ? 30 : 40; // 安全距离（增加10像素）
-            const adjustedBottom = Math.max(maxBottomPosition + safeDistance, isSmallMobile ? 35 : 40);
+            const adjustedBottom = Math.max(maxBottomPosition + safeDistance, isSmallMobile ? 40 : 45);
             targetBottom = adjustedBottom;
         }
         

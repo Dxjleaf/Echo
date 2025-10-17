@@ -404,6 +404,8 @@ class SimpleSenseSystem {
         if (window.TermSystem) {
             const termLinks = element.querySelectorAll('.term-link');
             termLinks.forEach(link => {
+                // 恢复术语链接的点击事件
+                link.style.pointerEvents = 'auto';
                 link.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();

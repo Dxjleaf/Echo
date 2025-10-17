@@ -276,7 +276,7 @@ html, body {
 /* 对话容器 */
         #dialogue-container {
             position: fixed;
-            top: 50%;
+            top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
             max-width: 80%;
@@ -296,7 +296,7 @@ html, body {
 
 /* 说话者名称 */
 .speaker-name {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     color: var(--accent-color);
     margin-bottom: 1.5rem;
     font-weight: bold;
@@ -306,7 +306,7 @@ html, body {
 
 /* 对话文本 */
 .dialogue-text {
-    font-size: 1.6rem;
+    font-size: 1.9rem;
     line-height: 1.8;
     color: var(--text-color);
     margin-bottom: 2rem;
@@ -343,7 +343,7 @@ html, body {
     bottom: 20%;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     color: var(--accent-color);
     max-width: 70%;
     text-align: center;
@@ -387,7 +387,7 @@ html, body {
     color: var(--accent-color);
     padding: 15px 20px;
     border-radius: 10px;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
