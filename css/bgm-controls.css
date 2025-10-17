@@ -140,38 +140,110 @@
 }
 
 /* 语言切换按钮样式 */
-.language-controls {
+/* 语言选择界面 */
+.language-selection-screen {
     position: fixed;
-    top: 70px; /* 在BGM控制按钮下方 */
-    right: 20px;
-    z-index: 100;
-}
-
-.language-toggle {
-    background: rgba(79, 195, 247, 0.7);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    color: white;
-    font-size: 1.2em;
-    cursor: pointer;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    z-index: 10000;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    transition: background 0.3s ease, transform 0.2s ease;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
 }
 
-.language-toggle:hover {
-    background: rgba(79, 195, 247, 1);
-    transform: scale(1.05);
+.language-selection-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
-.language-toggle.english {
-    background: rgba(255, 193, 7, 0.7); /* 英文模式用黄色 */
+.language-selection-content {
+    text-align: center;
+    max-width: 600px;
+    padding: 40px;
 }
 
-.language-toggle.english:hover {
-    background: rgba(255, 193, 7, 1);
+.language-title {
+    font-size: 2rem;
+    color: #ffffff;
+    margin-bottom: 50px;
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+    font-weight: 300;
+    letter-spacing: 2px;
+}
+
+.language-buttons {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.language-button {
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(99, 102, 241, 0.5);
+    border-radius: 16px;
+    padding: 30px 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 200px;
+    backdrop-filter: blur(10px);
+}
+
+.language-button:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.8);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+}
+
+.language-flag {
+    font-size: 4rem;
+    line-height: 1;
+}
+
+.language-name {
+    font-size: 1.5rem;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.language-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 300;
+}
+
+/* 手机端适配 */
+@media (max-width: 768px) {
+    .language-title {
+        font-size: 1.5rem;
+        margin-bottom: 30px;
+    }
+    
+    .language-buttons {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .language-button {
+        min-width: 180px;
+        padding: 25px 30px;
+    }
+    
+    .language-flag {
+        font-size: 3rem;
+    }
+    
+    .language-name {
+        font-size: 1.3rem;
+    }
 }

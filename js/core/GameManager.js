@@ -77,7 +77,17 @@ class GameManager {
 
         // 鼠标事件
         document.addEventListener('click', (event) => {
-            if (event.target.tagName !== 'BUTTON') {
+            // 忽略以下元素的点击：
+            // - 按钮
+            // - 术语链接和提示框
+            // - BGM控制界面
+            // - 设置面板
+            if (event.target.tagName !== 'BUTTON' && 
+                !event.target.classList.contains('term-link') &&
+                !event.target.closest('.term-tooltip') &&
+                !event.target.closest('#bgm-controls') &&
+                !event.target.closest('#bgm-volume-control') &&
+                !event.target.closest('#settings-panel')) {
                 this.handleAdvanceInput();
             }
         });

@@ -33,9 +33,16 @@ class DialogueSystem {
 
     // 说话者颜色预设
     static speakerColors = {
-        '旁白': '#cccccc',
-        '主角': '#4a9eff',
-        '系统': '#ff6b6b',
+        '旁白': '#aaaaaa',
+        'Narrator': '#aaaaaa',
+        '主角': '#4fc3f7',
+        '铿': '#4fc3f7',
+        'Keng': '#4fc3f7',
+        '绵回': '#8b5cf6',
+        'Mianhui': '#8b5cf6',
+        '瑟': '#f48fb1',
+        'Se': '#f48fb1',
+        '系统': '#ffa726',
         '利维': '#66b3ff',
         '小雅': '#ffd700',
         '卡俄斯': '#ff4444'
@@ -345,6 +352,11 @@ class DialogueSystem {
         // 立即显示完整文本
         if (this.elements.dialogueText) {
             this.elements.dialogueText.textContent = this.fullText;
+            
+            // 处理术语高亮
+            if (window.TermSystem) {
+                TermSystem.enhanceDialogueText(this.elements.dialogueText);
+            }
         }
         
         // 设置等待状态，防止用户立即点击推进
@@ -498,7 +510,7 @@ class DialogueSystem {
             this.elements.speakerName.style.color = this.speakerColors[dialogue.speaker] || this.speakerColors['旁白'];
             
             // 为旁白标签添加特殊样式
-            if (dialogue.speaker === '旁白' || !dialogue.speaker) {
+            if (dialogue.speaker === '旁白' || dialogue.speaker === 'Narrator' || !dialogue.speaker) {
                 this.elements.speakerName.classList.add('narration-label');
             } else {
                 this.elements.speakerName.classList.remove('narration-label');
@@ -508,7 +520,7 @@ class DialogueSystem {
         }
 
         // 检查是否为旁白并应用样式（主角对话不算旁白）
-        const isNarration = dialogue.speaker === '旁白' || !dialogue.speaker;
+        const isNarration = dialogue.speaker === '旁白' || dialogue.speaker === 'Narrator' || !dialogue.speaker;
         if (this.elements.dialogueText) {
             if (isNarration) {
                 this.elements.dialogueText.classList.add('narration');

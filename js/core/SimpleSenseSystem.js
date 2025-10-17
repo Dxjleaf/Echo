@@ -32,24 +32,24 @@ class SenseInstance {
     
     /**
      * 获取默认位置（使用百分比）
-     * 固定7个位置：视觉1个、听觉2个、触觉2个、嗅觉1个、味觉1个
+     * 优化空间利用，更分散的布局
      */
     getDefaultPosition(senseType) {
         const defaults = {
-            '视觉': { x: '50%', y: '25%' },        // 对话正上方
-            '听觉_0': { x: '20%', y: '60%' },      // 左耳
-            '听觉_1': { x: '80%', y: '60%' },      // 右耳
-            '触觉_0': { x: '15%', y: '85%' },      // 左手
-            '触觉_1': { x: '85%', y: '85%' },      // 右手
-            '嗅觉': { x: '50%', y: '70%' },        // 对话正下方
-            '味觉': { x: '50%', y: '90%' }         // 最底部中央
+            '视觉': { x: '50%', y: '15%' },        // 顶部中央
+            '听觉_0': { x: '12%', y: '35%' },      // 左侧
+            '听觉_1': { x: '88%', y: '35%' },      // 右侧
+            '触觉_0': { x: '8%', y: '70%' },       // 左下
+            '触觉_1': { x: '92%', y: '70%' },      // 右下
+            '嗅觉': { x: '50%', y: '80%' },        // 底部中央偏上
+            '味觉': { x: '50%', y: '92%' }         // 最底部
         };
         
         // 处理听觉和触觉的多位置
         if (senseType === '听觉') {
-            return defaults['听觉_0'];  // 默认返回第一个位置
+            return defaults['听觉_0'];
         } else if (senseType === '触觉') {
-            return defaults['触觉_0'];  // 默认返回第一个位置
+            return defaults['触觉_0'];
         }
         
         return defaults[senseType] || { x: '50%', y: '50%' };
@@ -57,17 +57,17 @@ class SenseInstance {
     
     /**
      * 获取指定索引的位置（用于听觉和触觉的多位置）
-     * 使用百分比定位
+     * 使用百分比定位，更分散的布局
      */
     static getPositionByIndex(senseType, index) {
         const positions = {
             '听觉': [
-                { x: '20%', y: '60%' },      // 左耳
-                { x: '80%', y: '60%' }       // 右耳
+                { x: '12%', y: '35%' },      // 左侧
+                { x: '88%', y: '35%' }       // 右侧
             ],
             '触觉': [
-                { x: '15%', y: '85%' },      // 左手
-                { x: '85%', y: '85%' }       // 右手
+                { x: '8%', y: '70%' },       // 左下
+                { x: '92%', y: '70%' }       // 右下
             ]
         };
         
@@ -102,16 +102,6 @@ class SenseInstance {
         return 0.6 + (0.4 * (1 - this.distance / 100));
     }
     
-    /**
-     * 获取距离描述文字
-     */
-    getDistanceDescription() {
-        if (this.distance <= 20) return "很近";
-        if (this.distance <= 40) return "较近";
-        if (this.distance <= 60) return "中等";
-        if (this.distance <= 80) return "较远";
-        return "很远";
-    }
     
     /**
      * 更新距离并重新计算样式
@@ -183,12 +173,12 @@ class SimpleSenseSystem {
      * 初始化动态五感系统
      */
     static initialize() {
-        console.log('[SimpleSenseSystem] 正在初始化动态五感系统（修复版）...');
+        Logger.info('正在初始化动态五感系统（优化版）...');
         
         // 获取或创建容器
         let gameContainer = document.getElementById('game-container');
         if (!gameContainer) {
-            console.error('[SimpleSenseSystem] 游戏容器未找到');
+            Logger.error('游戏容器未找到');
             return false;
         }
         
@@ -205,13 +195,13 @@ class SimpleSenseSystem {
         
         // 初始化状态
         this.senseInstances = new Map();
-        this.isVisible = false;
+        this.isVisible = true;
         this.nextInstanceId = 1;
         
-        // 初始为隐藏状态
-        this.hideSenseDisplay();
+        // 容器始终显示
+        this.showSenseDisplay();
         
-        console.log('[SimpleSenseSystem] ✅ 动态五感系统初始化完成');
+            Logger.success('动态五感系统初始化完成');
         return true;
     }
 
@@ -221,8 +211,9 @@ class SimpleSenseSystem {
     static showSenseDisplay() {
         if (this.container) {
             this.container.style.display = 'block';
+            this.container.style.opacity = '1';
             this.isVisible = true;
-            console.log('[SimpleSenseSystem] 五感容器已显示');
+        Logger.info('五感容器已显示');
         }
     }
 
@@ -231,7 +222,7 @@ class SimpleSenseSystem {
      */
     static hideSenseDisplay() {
         if (this.container) {
-            this.container.style.display = 'none';
+            this.container.style.opacity = '0';
             this.isVisible = false;
             console.log('[SimpleSenseSystem] 五感容器已隐藏');
         }
@@ -273,6 +264,35 @@ class SimpleSenseSystem {
     }
     
     /**
+     * 获取感官类型名称（支持多语言）
+     * @param {string} senseType - 感官类型
+     * @returns {string} - 翻译后的感官名称
+     */
+    static getSenseTypeName(senseType) {
+        // 检查当前语言设置
+        const currentLang = localStorage.getItem('gameLanguage') || 'zh';
+        
+        const translations = {
+            'zh': {
+                '嗅觉': '嗅觉',
+                '味觉': '味觉', 
+                '触觉': '触觉',
+                '听觉': '听觉',
+                '视觉': '视觉'
+            },
+            'en': {
+                '嗅觉': 'Smell',
+                '味觉': 'Taste',
+                '触觉': 'Touch', 
+                '听觉': 'Hearing',
+                '视觉': 'Sight'
+            }
+        };
+        
+        return translations[currentLang]?.[senseType] || senseType;
+    }
+    
+    /**
      * 创建DOM元素 - 使用固定像素定位
      * @param {SenseInstance} instance - 五感实例
      */
@@ -283,45 +303,91 @@ class SimpleSenseSystem {
         element.dataset.senseId = instance.id;
         element.dataset.senseType = instance.senseType;
         
-        // 设置内容，包含距离显示
+        // 处理术语（如果TermSystem存在）
+        let processedValue = instance.value;
+        if (window.TermSystem) {
+            processedValue = TermSystem.processText(instance.value);
+        }
+        
+        // 获取翻译后的感官类型名称
+        const translatedSenseType = this.getSenseTypeName(instance.senseType);
+        
+        // 设置内容
         element.innerHTML = `
-            <div class="sense-type">${instance.senseType}</div>
-            <div class="sense-value">${instance.value}</div>
-            <div class="sense-distance">${instance.getDistanceDescription()}</div>
+            <div class="sense-type">${translatedSenseType}</div>
+            <div class="sense-value">${processedValue}</div>
         `;
         
         // 添加到容器
         this.container.appendChild(element);
         instance.element = element;
         
+        // 为术语链接添加事件
+        if (window.TermSystem) {
+            const termLinks = element.querySelectorAll('.term-link');
+            termLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const term = link.getAttribute('data-term');
+                    TermSystem.showTooltip(term, link);
+                });
+            });
+        }
+        
         // 使用百分比定位，配合transform居中
         element.style.cssText = `
             position: absolute !important;
             left: ${instance.currentPosition.x} !important;
             top: ${instance.currentPosition.y} !important;
-            transform: translate(-50%, -50%) !important;
+            transform: translate(-50%, -50%) scale(0.8) !important;
             font-size: ${instance.fontSize}px !important;
             opacity: 0;
-            transition: opacity 1.5s ease-in-out, font-size 0.3s ease;
         `;
         
         // 添加鼠标事件
         this.addMouseEvents(element, instance);
         
-        // 淡入动画
+        // 淡入动画 - 添加更新效果类
         setTimeout(() => {
-            element.style.opacity = instance.opacity.toString();
-        }, 100);
+            element.classList.add('sense-updated');
+            element.classList.add('visible');
+            setTimeout(() => {
+                element.classList.remove('sense-updated');
+            }, 1200);
+        }, 50);
         
         console.log(`[SimpleSenseSystem] 创建元素: ${instance.id} (${instance.senseType}) 像素位置: (${Math.round(instance.currentPosition.x)}, ${Math.round(instance.currentPosition.y)}) 字体: ${Math.round(instance.fontSize)}px`);
     }
     
     /**
-     * 添加鼠标事件（已禁用详情面板）
+     * 添加鼠标事件
      */
     static addMouseEvents(element, instance) {
-        // 详情面板功能已移除
-        // 可以在这里添加其他鼠标交互
+        // 点击锁定/解锁展开状态
+        element.addEventListener('click', (e) => {
+            // 忽略术语链接的点击
+            if (e.target.classList.contains('term-link')) {
+                e.stopPropagation();
+                return;
+            }
+            
+            e.stopPropagation();
+            e.preventDefault();
+            
+            if (element.classList.contains('locked')) {
+                element.classList.remove('locked');
+                console.log(`[SimpleSenseSystem] 解锁五感: ${instance.id}`);
+            } else {
+                element.classList.add('locked');
+                console.log(`[SimpleSenseSystem] 锁定五感: ${instance.id}`);
+            }
+        });
+        
+        // 确保悬停也能工作
+        element.addEventListener('mouseenter', () => {
+            console.log(`[SimpleSenseSystem] 悬停五感: ${instance.id}`);
+        });
     }
     
     /**
@@ -344,8 +410,33 @@ class SimpleSenseSystem {
             instance.value = newValue;
             const valueElement = instance.element.querySelector('.sense-value');
             if (valueElement) {
-                valueElement.textContent = newValue;
+                // 处理术语
+                let processedValue = newValue;
+                if (window.TermSystem) {
+                    processedValue = TermSystem.processText(newValue);
+                }
+                valueElement.innerHTML = processedValue;
+                
+                // 为术语链接添加事件
+                if (window.TermSystem) {
+                    const termLinks = valueElement.querySelectorAll('.term-link');
+                    termLinks.forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            const term = link.getAttribute('data-term');
+                            TermSystem.showTooltip(term, link);
+                        });
+                    });
+                }
             }
+        }
+        
+        // 更新感官类型名称（支持语言切换）
+        const typeElement = instance.element.querySelector('.sense-type');
+        if (typeElement) {
+            const translatedSenseType = this.getSenseTypeName(instance.senseType);
+            typeElement.textContent = translatedSenseType;
         }
         
         // 更新位置
@@ -370,13 +461,11 @@ class SimpleSenseSystem {
         
         // 详情面板已移除
         
-        // 更新动画 - 淡入淡出
+        // 更新动画 - 爆炸式出现
         instance.element.classList.add('sense-updated');
         setTimeout(() => {
             instance.element.classList.remove('sense-updated');
-            // 淡入淡出动画完成后显示感叹号
-            this.showSenseUpdateNotification(instance);
-        }, 1000);
+        }, 1200);
         
         console.log(`[SimpleSenseSystem] 更新五感实例: ${senseId} 距离: ${instance.distance}`);
         return true;
@@ -448,6 +537,19 @@ class SimpleSenseSystem {
     }
     
     /**
+     * 解锁所有已锁定的五感
+     */
+    static unlockAllSenses() {
+        console.log('[SimpleSenseSystem] 解锁所有五感');
+        
+        this.senseInstances.forEach((instance) => {
+            if (instance.element) {
+                instance.element.classList.remove('locked');
+            }
+        });
+    }
+    
+    /**
      * 检查是否有特定ID的实例
      */
     static hasSense(senseId) {
@@ -511,7 +613,7 @@ class SimpleSenseSystem {
             console.log(`  - ${id}: ${instance.senseType} - "${instance.value}"`);
             console.log(`    基准位置: (${instance.basePosition.x}, ${instance.basePosition.y})`);
             console.log(`    当前位置: (${Math.round(instance.currentPosition.x)}, ${Math.round(instance.currentPosition.y)})`);
-            console.log(`    距离: ${instance.distance} (${instance.getDistanceDescription()})`);
+            console.log(`    距离: ${instance.distance}`);
             console.log(`    元素存在: ${!!instance.element}`);
         });
         
@@ -582,11 +684,12 @@ class SimpleSenseSystem {
      */
     static updateLeftHearing(senseValue) {
         console.log(`[SimpleSenseSystem] 更新左耳听觉: ${senseValue}`);
+        const id = '听觉_0';
         
-        if (this.hasSense('hearing_left')) {
-            this.updateSense('hearing_left', senseValue);
+        if (this.hasSense(id)) {
+            this.updateSense(id, senseValue);
         } else {
-            this.createSense('听觉', senseValue, { x: '20%', y: '60%' }, 50, 'hearing_left');
+            this.createSense('听觉', senseValue, { x: '12%', y: '35%' }, 50, id);
         }
     }
     
@@ -596,11 +699,12 @@ class SimpleSenseSystem {
      */
     static updateRightHearing(senseValue) {
         console.log(`[SimpleSenseSystem] 更新右耳听觉: ${senseValue}`);
+        const id = '听觉_1';
         
-        if (this.hasSense('hearing_right')) {
-            this.updateSense('hearing_right', senseValue);
+        if (this.hasSense(id)) {
+            this.updateSense(id, senseValue);
         } else {
-            this.createSense('听觉', senseValue, { x: '80%', y: '60%' }, 50, 'hearing_right');
+            this.createSense('听觉', senseValue, { x: '88%', y: '35%' }, 50, id);
         }
     }
     
@@ -610,11 +714,12 @@ class SimpleSenseSystem {
      */
     static updateLeftTouch(senseValue) {
         console.log(`[SimpleSenseSystem] 更新左手触觉: ${senseValue}`);
+        const id = '触觉_0';
         
-        if (this.hasSense('touch_left')) {
-            this.updateSense('touch_left', senseValue);
+        if (this.hasSense(id)) {
+            this.updateSense(id, senseValue);
         } else {
-            this.createSense('触觉', senseValue, { x: '15%', y: '85%' }, 50, 'touch_left');
+            this.createSense('触觉', senseValue, { x: '8%', y: '70%' }, 50, id);
         }
     }
     
@@ -624,57 +729,37 @@ class SimpleSenseSystem {
      */
     static updateRightTouch(senseValue) {
         console.log(`[SimpleSenseSystem] 更新右手触觉: ${senseValue}`);
+        const id = '触觉_1';
         
-        if (this.hasSense('touch_right')) {
-            this.updateSense('touch_right', senseValue);
+        if (this.hasSense(id)) {
+            this.updateSense(id, senseValue);
         } else {
-            this.createSense('触觉', senseValue, { x: '85%', y: '85%' }, 50, 'touch_right');
+            this.createSense('触觉', senseValue, { x: '92%', y: '70%' }, 50, id);
         }
     }
     
     /**
-     * 显示五感更新感叹号提示
-     * @param {SenseInstance} instance - 五感实例
+     * 显示五感更新感叹号提示（已禁用）
      */
     static showSenseUpdateNotification(instance) {
-        if (!instance.element) return;
-        
-        // 移除已存在的感叹号
-        const existingNotification = instance.element.querySelector('.sense-notification');
-        if (existingNotification) {
-            existingNotification.remove();
-        }
-        
-        // 创建感叹号元素
-        const notification = document.createElement('div');
-        notification.className = 'sense-notification';
-        notification.textContent = '!';
-        
-        // 添加到五感元素
-        instance.element.appendChild(notification);
-        
-        // 显示动画
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
-        
-        // 添加鼠标事件监听器
-        const fadeOutNotification = () => {
-            notification.classList.add('fade-out');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
+        // 不显示感叹号
+        return;
+    }
+    
+    /**
+     * 刷新所有感官的名称（用于语言切换）
+     */
+    static refreshAllSenseNames() {
+        console.log('[SimpleSenseSystem] 刷新所有感官名称');
+        this.senseInstances.forEach((instance) => {
+            if (instance.element) {
+                const typeElement = instance.element.querySelector('.sense-type');
+                if (typeElement) {
+                    const translatedSenseType = this.getSenseTypeName(instance.senseType);
+                    typeElement.textContent = translatedSenseType;
                 }
-            }, 300);
-        };
-        
-        // 鼠标悬停时淡出
-        instance.element.addEventListener('mouseenter', fadeOutNotification, { once: true });
-        
-        // 点击时也淡出
-        instance.element.addEventListener('click', fadeOutNotification, { once: true });
-        
-        console.log(`[SimpleSenseSystem] 显示五感更新提示: ${instance.id}`);
+            }
+        });
     }
 }
 

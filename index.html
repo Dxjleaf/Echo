@@ -9,6 +9,10 @@
     <link rel="preload" href="css/main.css" as="style">
     <link rel="preload" href="js/core/DialogueSystem.js" as="script">
     <link rel="preload" href="js/core/GameManager.js" as="script">
+    <link rel="preload" href="js/core/SimpleSenseSystem.js" as="script">
+    <link rel="preload" href="js/story/StoryManager.js" as="script">
+    <link rel="preload" href="Punch Deck - Ethereal.mp3" as="audio">
+    <link rel="preload" href="medium-text-blip-14855.mp3" as="audio">
     
     <!-- 关键CSS内联 -->
     <style>
@@ -42,6 +46,7 @@
     <link rel="stylesheet" href="css/background.css">
     <link rel="stylesheet" href="css/continuous-sense.css">
     <link rel="stylesheet" href="css/bgm-controls.css">
+    <link rel="stylesheet" href="css/term.css">
     
     <!-- 字体 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,11 +95,6 @@
             </div>
         </div>
 
-        <!-- 语言切换按钮 -->
-        <div id="language-controls" class="language-controls">
-            <button id="language-toggle" class="language-toggle" title="语言切换">🌐</button>
-        </div>
-
         <!-- 设置面板 -->
         <div id="settings-panel" class="settings-panel hidden">
             <div class="settings-content">
@@ -135,6 +135,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- 语言选择界面 -->
+        <div id="language-selection-screen" class="language-selection-screen hidden">
+            <div class="language-selection-content">
+                <h2 class="language-title">选择语言 / Select Language</h2>
+                <div class="language-buttons">
+                    <button class="language-button" data-lang="zh">
+                        <span class="language-flag">🇨🇳</span>
+                        <span class="language-name">中文</span>
+                        <span class="language-subtitle">简体中文</span>
+                    </button>
+                    <button class="language-button" data-lang="en">
+                        <span class="language-flag">🇺🇸</span>
+                        <span class="language-name">English</span>
+                        <span class="language-subtitle">English</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 音频元素 -->
@@ -144,26 +163,102 @@
     <audio id="dialogue-advance-sound"></audio>
     <audio id="cycle-complete-sound"></audio>
 
+    <!-- 优化工具脚本 - 优先加载 -->
+    <script src="js/utils/Logger.js"></script>
+    <script src="js/utils/DOMOptimizer.js"></script>
+    <script src="js/utils/MemoryManager.js"></script>
+    <script src="js/utils/PerformanceMonitor.js"></script>
+    
     <!-- 核心游戏脚本 - 同步加载 -->
     <script src="js/utils/ColorUtils.js"></script>
     <script src="js/core/GameManager.js"></script>
+    <script src="js/core/TermSystem.js"></script>
     <script src="js/core/DialogueSystem.js"></script>
     <script src="js/core/BackgroundSystem.js"></script>
-    <script src="js/core/SimpleSenseSystem.js"></script>
-    <script src="js/core/BGMManager.js"></script>
-    <script src="js/story/EnhancedDeepSkyScript.js"></script>
-    <script src="js/story/EnhancedDeepSkyScript_EN.js"></script>
-    <script src="js/story/StoryManager.js"></script>
     
     <!-- 非关键脚本 - 异步加载 -->
-    <script async src="js/utils/SmartColorAdapter.js"></script>
-    <script async src="js/utils/ResourceOptimizer.js"></script>
+    <script async src="js/core/SimpleSenseSystem.js"></script>
+    <script async src="js/core/BGMManager.js"></script>
+    <script async src="js/story/EnhancedDeepSkyScript.js"></script>
+    <script async src="js/story/EnhancedDeepSkyScript_EN.js"></script>
+    <script async src="js/story/StoryManager.js"></script>
     
     <!-- 主启动脚本 -->
     <script>
+        // 初始化优化系统
+        function initializeOptimizations() {
+            Logger.info('🚀 初始化性能优化系统...');
+            
+            // 初始化 DOM 优化器
+            if (window.DOMOptimizer) {
+                DOMOptimizer.initialize();
+            }
+            
+            // 初始化性能监控（仅开发环境）
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                if (window.PerformanceMonitor) {
+                    PerformanceMonitor.initialize();
+                    PerformanceMonitor.show();
+                }
+            } else {
+                // 生产环境禁用调试日志
+                Logger.setDebugMode(false);
+                Logger.info('生产环境：调试日志已禁用');
+            }
+            
+            Logger.success('性能优化系统初始化完成');
+            
+            // 添加键盘快捷键
+            this.setupKeyboardShortcuts();
+        }
+        
+        // 设置键盘快捷键
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ctrl + Shift + P: 切换性能监控
+                if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+                    e.preventDefault();
+                    if (window.PerformanceMonitor) {
+                        PerformanceMonitor.toggle();
+                    }
+                }
+                
+                // Ctrl + Shift + L: 切换日志级别
+                if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+                    e.preventDefault();
+                    if (window.Logger) {
+                        const currentMode = Logger.isDebug;
+                        Logger.setDebugMode(!currentMode);
+                        Logger.info(`调试模式: ${!currentMode ? '启用' : '禁用'}`);
+                    }
+                }
+                
+                // Ctrl + Shift + M: 显示内存统计
+                if (e.ctrlKey && e.shiftKey && e.key === 'M') {
+                    e.preventDefault();
+                    if (window.MemoryManager) {
+                        const stats = MemoryManager.getStats();
+                        console.table(stats);
+                        Logger.info('内存统计已输出到控制台');
+                    }
+                }
+                
+                // Ctrl + Shift + C: 清理内存
+                if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                    e.preventDefault();
+                    if (window.MemoryManager) {
+                        MemoryManager.cleanup();
+                        Logger.success('内存清理完成');
+                    }
+                }
+            });
+            
+            Logger.info('键盘快捷键已设置: Ctrl+Shift+P(性能监控), Ctrl+Shift+L(日志), Ctrl+Shift+M(内存统计), Ctrl+Shift+C(清理内存)');
+        }
+        
         // 淡入五感系统
         function fadeInSenses() {
-            console.log('👁️ 开始淡入五感系统...');
+            Logger.info('👁️ 开始淡入五感系统...');
             
             // 获取五感容器
             const sensesContainer = document.getElementById('persistent-senses-container');
@@ -258,6 +353,23 @@
                 } catch (error) {
                     console.error('❌ GameManager 初始化失败:', error);
                 }
+                
+                // 初始化术语系统
+                console.log('📚 正在初始化 TermSystem...');
+                try {
+                    if (typeof TermSystem !== 'undefined') {
+                        TermSystem.initialize();
+                        // 初始化剧本术语
+                        if (typeof EnhancedDeepSkyScript !== 'undefined' && EnhancedDeepSkyScript.initializeTerms) {
+                            EnhancedDeepSkyScript.initializeTerms();
+                        }
+                        console.log('✅ TermSystem 初始化完成');
+                    } else {
+                        console.error('❌ TermSystem 未定义');
+                    }
+                } catch (error) {
+                    console.error('❌ TermSystem 初始化失败:', error);
+                }
                 await new Promise(resolve => setTimeout(resolve, 200));
                 
                 updateProgress(3, 11, '正在初始化对话系统...');
@@ -303,49 +415,14 @@
                 await new Promise(resolve => setTimeout(resolve, 200));
                 
                 // TextEffectManager 已删除
-                
-                updateProgress(6, 11, '正在初始化智能颜色适配系统...');
-                console.log('🎨 正在初始化 SmartColorAdapter...');
-                try {
-                    if (typeof SmartColorAdapter !== 'undefined') {
-                        await SmartColorAdapter.initialize();
-                        console.log('✅ SmartColorAdapter 初始化完成');
-                    } else {
-                        console.error('❌ SmartColorAdapter 未定义');
-                    }
-                } catch (error) {
-                    console.error('❌ SmartColorAdapter 初始化失败:', error);
-                }
                 await new Promise(resolve => setTimeout(resolve, 200));
                 
-                updateProgress(7, 11, '正在初始化淡入文字系统...');
-                console.log('✨ 正在初始化 FadeTextSystem...');
-                try {
-                    if (typeof FadeTextSystem !== 'undefined') {
-                        await FadeTextSystem.initialize();
-                        console.log('✅ FadeTextSystem 初始化完成');
-                    } else {
-                        console.error('❌ FadeTextSystem 未定义');
-                    }
-                } catch (error) {
-                    console.error('❌ FadeTextSystem 初始化失败:', error);
-                }
                 await new Promise(resolve => setTimeout(resolve, 200));
                 
                 updateProgress(8, 11, '正在启动游戏...');
                 console.log('🎮 正在启动游戏...');
                 
-                // 延迟初始化非关键系统
-                setTimeout(async () => {
-                    try {
-                        if (typeof ResourceOptimizer !== 'undefined') {
-                            await ResourceOptimizer.initialize();
-                            console.log('✅ ResourceOptimizer 延迟初始化完成');
-                        }
-                    } catch (error) {
-                        console.log('⚠️ 非关键系统延迟初始化失败:', error);
-                    }
-                }, 1000);
+                // 延迟初始化非关键系统（已移除）
                 
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
@@ -386,11 +463,6 @@
                         SimpleSenseSystem.initialize();
                         console.log('✅ 持续显示五感系统初始化完成');
                     }
-                    
-                    if (typeof StoryManager !== 'undefined') {
-                        StoryManager.initializeSenses();
-                        console.log('✅ 五感系统初始化完成');
-                    }
                 } catch (error) {
                     console.error('❌ 五感系统初始化失败:', error);
                 }
@@ -398,7 +470,7 @@
                 // 完成初始化
                 updateProgress(11, 11, '初始化完成，正在启动游戏...');
                 
-                // 短暂延迟后隐藏加载屏幕
+                // 短暂延迟后隐藏加载屏幕，显示语言选择
                 setTimeout(() => {
                     const loadingScreen = document.getElementById('loading-screen');
                     if (loadingScreen) {
@@ -406,38 +478,8 @@
                         console.log('🎮 加载屏幕已隐藏');
                     }
                     
-                    // 开始背景颜色过渡
-                    startBackgroundTransition();
-                    
-                    // 延迟启动游戏，让界面先淡入
-                    setTimeout(() => {
-                        console.log('✅ 所有系统初始化完成');
-                        
-                // 启动背景音乐
-                if (typeof BGMManager !== 'undefined') {
-                    BGMManager.startBGM();
-                    console.log('🎵 背景音乐已启动');
-                    
-                    // 初始化BGM控制（在音乐启动后）
-                    initializeBGMControls();
-                    
-                    // 初始化语言切换
-                    initializeLanguageControls();
-                }
-                        
-                        if (typeof StoryManager !== 'undefined') {
-                            // 先淡入五感系统
-                            fadeInSenses();
-                            
-                            // 延迟启动对话
-                            setTimeout(() => {
-                                StoryManager.startGame();
-                                console.log('🎯 游戏已开始');
-                            }, 1000);
-                        } else {
-                            console.error('❌ StoryManager 未找到');
-                        }
-                    }, 800);
+                    // 显示语言选择界面
+                    showLanguageSelection();
                 }, 500);
                 
             } catch (error) {
@@ -451,6 +493,119 @@
                 }
             }
         });
+        
+        // 显示语言选择界面
+        function showLanguageSelection() {
+            const languageScreen = document.getElementById('language-selection-screen');
+            if (!languageScreen) return;
+            
+            languageScreen.classList.remove('hidden');
+            
+            // 为按钮添加点击事件
+            const languageButtons = languageScreen.querySelectorAll('.language-button');
+            languageButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const selectedLang = button.getAttribute('data-lang');
+                    console.log(`🌐 选择语言: ${selectedLang}`);
+                    
+                    // 保存语言选择
+                    localStorage.setItem('gameLanguage', selectedLang);
+                    
+                    // 设置语言
+                    if (selectedLang === 'en') {
+                        console.log('🌐 开始切换到英文...');
+                        console.log('EnhancedDeepSkyScript_EN 是否存在:', typeof EnhancedDeepSkyScript_EN !== 'undefined');
+                        
+                        if (typeof EnhancedDeepSkyScript_EN !== 'undefined') {
+                            // 直接替换全局脚本
+                            window.EnhancedDeepSkyScript = window.EnhancedDeepSkyScript_EN;
+                            console.log('🌐 已替换 window.EnhancedDeepSkyScript');
+                            console.log('测试调用:', window.EnhancedDeepSkyScript.getCycle1().title);
+                            
+                            // 重新初始化 StoryManager 数据
+                            if (window.StoryManager) {
+                                console.log('🌐 重新初始化 StoryManager...');
+                                StoryManager.storyData.cycles = [];
+                                StoryManager.initializeStoryData();
+                                console.log('🌐 StoryManager cycles 数量:', StoryManager.storyData.cycles.length);
+                                console.log('🌐 第一个 cycle 标题:', StoryManager.storyData.cycles[0]?.title);
+                            }
+                            
+                            // 初始化英文术语
+                            if (window.TermSystem) {
+                                TermSystem.terms.clear();
+                                if (window.EnhancedDeepSkyScript.initializeTerms) {
+                                    window.EnhancedDeepSkyScript.initializeTerms();
+                                }
+                                console.log('🌐 已加载英文术语，术语数量:', TermSystem.terms.size);
+                            }
+                            
+                            // 刷新五感名称
+                            if (window.SimpleSenseSystem) {
+                                SimpleSenseSystem.refreshAllSenseNames();
+                            }
+                        } else {
+                            console.error('❌ EnhancedDeepSkyScript_EN 未定义！');
+                        }
+                    } else {
+                        console.log('🌐 使用中文脚本');
+                        // 中文也需要初始化数据
+                        if (window.StoryManager) {
+                            StoryManager.storyData.cycles = [];
+                            StoryManager.initializeStoryData();
+                            console.log('🌐 已加载中文数据');
+                        }
+                        
+                        // 刷新五感名称
+                        if (window.SimpleSenseSystem) {
+                            SimpleSenseSystem.refreshAllSenseNames();
+                        }
+                    }
+                    
+                    // 隐藏语言选择界面
+                    languageScreen.classList.add('hidden');
+                    
+                    // 开始游戏
+                    startGame();
+                });
+            });
+        }
+        
+        // 开始游戏
+        function startGame() {
+            Logger.success('✅ 所有系统初始化完成，准备启动游戏');
+            
+            // 初始化优化系统
+            initializeOptimizations();
+            
+            // 开始背景颜色过渡
+            startBackgroundTransition();
+            
+            // 启动背景音乐
+            if (typeof BGMManager !== 'undefined') {
+                BGMManager.startBGM();
+                console.log('🎵 背景音乐已启动');
+                
+                // 初始化BGM控制
+                initializeBGMControls();
+            }
+            
+            // 延迟启动游戏
+            setTimeout(() => {
+                if (typeof StoryManager !== 'undefined') {
+                    // 先淡入五感系统
+                    fadeInSenses();
+                    
+                    // 延迟启动对话
+                    setTimeout(() => {
+                        StoryManager.startGame();
+                        console.log('🎯 游戏已开始');
+                    }, 1000);
+                } else {
+                    console.error('❌ StoryManager 未找到');
+                }
+            }, 800);
+        }
         
         // 初始化BGM控制
         function initializeBGMControls() {
@@ -518,77 +673,6 @@
             
             console.log('🎵 BGM控制初始化完成');
         }
-
-        // 语言切换控制
-        function initializeLanguageControls() {
-            const languageToggle = document.getElementById('language-toggle');
-            
-            if (!languageToggle) {
-                console.warn('语言切换元素未找到');
-                return;
-            }
-            
-            // 获取当前语言设置（默认中文）
-            let currentLanguage = localStorage.getItem('gameLanguage') || 'zh';
-            
-            // 设置初始状态
-            updateLanguageButton(currentLanguage);
-            
-            // 切换语言
-            languageToggle.addEventListener('click', () => {
-                currentLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
-                localStorage.setItem('gameLanguage', currentLanguage);
-                updateLanguageButton(currentLanguage);
-                switchLanguage(currentLanguage);
-                console.log(`🌐 语言已切换到: ${currentLanguage === 'zh' ? '中文' : 'English'}`);
-            });
-            
-            console.log('🌐 语言切换控制初始化完成');
-        }
-        
-        // 更新语言按钮状态
-        function updateLanguageButton(language) {
-            const languageToggle = document.getElementById('language-toggle');
-            if (language === 'en') {
-                languageToggle.classList.add('english');
-                languageToggle.textContent = '🇺🇸';
-                languageToggle.title = 'Switch to Chinese';
-            } else {
-                languageToggle.classList.remove('english');
-                languageToggle.textContent = '🌐';
-                languageToggle.title = 'Switch to English';
-            }
-        }
-        
-        // 切换语言
-        function switchLanguage(language) {
-            if (language === 'en') {
-                // 切换到英文
-                if (typeof EnhancedDeepSkyScript_EN !== 'undefined') {
-                    // 替换StoryManager中的脚本引用
-                    window.EnhancedDeepSkyScript = EnhancedDeepSkyScript_EN;
-                    console.log('🌐 已切换到英文脚本');
-                } else {
-                    console.warn('英文脚本未加载');
-                }
-            } else {
-                // 切换到中文
-                if (typeof window.OriginalEnhancedDeepSkyScript !== 'undefined') {
-                    window.EnhancedDeepSkyScript = window.OriginalEnhancedDeepSkyScript;
-                } else {
-                    // 重新加载中文脚本
-                    location.reload();
-                }
-                console.log('🌐 已切换到中文脚本');
-            }
-        }
-        
-        // 保存原始中文脚本引用
-        window.addEventListener('load', () => {
-            if (typeof EnhancedDeepSkyScript !== 'undefined') {
-                window.OriginalEnhancedDeepSkyScript = EnhancedDeepSkyScript;
-            }
-        });
     </script>
 </body>
 </html>

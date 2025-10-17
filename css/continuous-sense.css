@@ -1,6 +1,6 @@
 /**
- * 持续显示五感系统样式
- * 基于人体感官位置的布局设计
+ * 五感系统样式 - 重新设计版
+ * 充分利用屏幕空间的沉浸式布局
  */
 
 /* 五感容器 - 全屏覆盖 */
@@ -11,276 +11,526 @@
     width: 100vw;
     height: 100vh;
     pointer-events: none;
-    z-index: 50;
-    display: none; /* 初始隐藏 */
+    z-index: 70;
+    display: block;
 }
 
-/* 动态五感元素 - 使用百分比定位 */
+/* 动态五感元素 - 默认收起状态 */
+/* 优化动画性能 - 启用 GPU 加速 */
 .dynamic-sense {
     position: absolute !important;
-    transform: translate(-50%, -50%);
-    color: rgba(255, 255, 255, 0.9);
-    font-family: 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+    transform: translate(-50%, -50%) scale(0.8) translateZ(0); /* 强制 GPU 加速 */
+    color: rgba(255, 255, 255, 0.95);
+    font-family: 'Noto Sans SC', sans-serif;
     text-align: center;
-    max-width: 200px;
+    max-width: 90px;
+    min-width: 90px;
+    height: 90px;
     opacity: 0;
-    transition: opacity 1.5s ease-in-out, font-size 0.3s ease;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-    pointer-events: auto;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: auto !important;
     cursor: pointer;
-    padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 6px;
-    backdrop-filter: blur(5px);
+    padding: 8px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4));
+    border-radius: 50%;
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(99, 102, 241, 0.4);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 1;
+    
+    /* 性能优化 */
+    will-change: transform, opacity; /* 提示浏览器优化 */
+    backface-visibility: hidden; /* 避免闪烁 */
+    -webkit-font-smoothing: antialiased; /* 字体平滑 */
 }
 
-/* 位置移动动画 */
-.dynamic-sense.position-changing {
-    transition: opacity 1.5s ease-in-out, left 0.5s ease, top 0.5s ease, transform 0.3s ease;
+.dynamic-sense.visible {
+    opacity: 0.85 !important;
+    transform: translate(-50%, -50%) scale(1) translateZ(0) !important; /* 保持 GPU 加速 */
+}
+
+/* 展开状态 - 悬停或点击锁定 */
+.dynamic-sense.expanded,
+.dynamic-sense:hover {
+    max-width: 350px;
+    min-width: 200px;
+    height: auto;
+    padding: 20px 28px;
+    border-radius: 16px;
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1) translateZ(0); /* 保持 GPU 加速 */
+    z-index: 80 !important;
+}
+
+/* 锁定展开状态（点击后） */
+.dynamic-sense.locked {
+    max-width: 350px;
+    min-width: 200px;
+    height: auto;
+    padding: 20px 28px;
+    border-radius: 16px;
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1) translateZ(0); /* 保持 GPU 加速 */
+    z-index: 80 !important;
+}
+
+/* 感官更新动画 */
+.dynamic-sense.sense-updated {
+    animation: senseUpdateExplosion 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes senseUpdateExplosion {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+        filter: blur(8px) brightness(1.5);
+    }
+    40% {
+        transform: translate(-50%, -50%) scale(1.15);
+        opacity: 1;
+        filter: blur(0) brightness(1.3);
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(0.95);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1) translateZ(0); /* 保持 GPU 加速 */
+        opacity: 1;
+        filter: blur(0) brightness(1);
+    }
 }
 
 /* 五感类型标签 */
 .sense-type {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 3px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 300;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    position: relative;
+    transition: all 0.3s ease;
+    white-space: nowrap;
 }
 
-/* 五感值描述 */
+.dynamic-sense.expanded .sense-type,
+.dynamic-sense.locked .sense-type,
+.dynamic-sense:hover .sense-type {
+    margin-bottom: 8px;
+}
+
+.dynamic-sense.expanded .sense-type::after,
+.dynamic-sense.locked .sense-type::after,
+.dynamic-sense:hover .sense-type::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: 0.3;
+}
+
+/* 五感值描述 - 默认隐藏 */
 .sense-value {
-    font-size: 13px;
-    line-height: 1.4;
+    font-size: 16px;
+    line-height: 1.8;
     word-wrap: break-word;
     font-weight: 400;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    display: none;
 }
 
-/* 距离描述 */
-.sense-distance {
-    font-size: 9px;
-    color: rgba(255, 255, 255, 0.5);
-    font-style: italic;
-    margin-top: 2px;
+.dynamic-sense.expanded .sense-value,
+.dynamic-sense.locked .sense-value,
+.dynamic-sense:hover .sense-value {
+    opacity: 1;
+    max-height: 500px;
+    display: block;
 }
 
-/* === 不同感官的颜色微调 === */
 
-/* 视觉 - 对话正上方 */
+/* === 不同感官的独特视觉 === */
+
+/* 视觉 - 顶部中央，白色主调 */
+.视觉-sense {
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15), rgba(100, 100, 120, 0.3));
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 
+        0 12px 48px rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
 .视觉-sense .sense-type {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .视觉-sense .sense-value {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 1);
+    font-size: 18px;
     font-weight: 500;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
 }
 
-/* 听觉 - 左右耳位置 */
+/* 听觉 - 左右两侧，青蓝色 */
+.听觉-sense {
+    background: radial-gradient(ellipse at center, rgba(99, 179, 237, 0.25), rgba(30, 64, 175, 0.3));
+    border-color: rgba(99, 179, 237, 0.5);
+    box-shadow: 
+        0 12px 48px rgba(99, 179, 237, 0.3),
+        inset 0 1px 0 rgba(99, 179, 237, 0.2);
+}
+
 .听觉-sense .sense-type {
-    color: rgba(200, 230, 255, 0.7);
+    color: rgba(147, 197, 253, 0.8);
 }
 
 .听觉-sense .sense-value {
-    color: rgba(200, 230, 255, 0.9);
+    color: rgba(191, 219, 254, 0.95);
     font-style: italic;
+    font-size: 17px;
+    text-shadow: 0 0 15px rgba(99, 179, 237, 0.5);
 }
 
-/* 触觉 - 左右手位置 */
+/* 触觉 - 底部两侧，暖黄色 */
+.触觉-sense {
+    background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.2), rgba(217, 119, 6, 0.25));
+    border-color: rgba(251, 191, 36, 0.4);
+    box-shadow: 
+        0 12px 48px rgba(251, 191, 36, 0.25),
+        inset 0 1px 0 rgba(251, 191, 36, 0.15);
+}
+
 .触觉-sense .sense-type {
-    color: rgba(255, 240, 200, 0.7);
+    color: rgba(253, 224, 71, 0.7);
 }
 
 .触觉-sense .sense-value {
-    color: rgba(255, 240, 200, 0.9);
-    letter-spacing: 0.5px;
+    color: rgba(254, 240, 138, 0.95);
+    letter-spacing: 1px;
+    font-size: 16px;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
 }
 
-/* 嗅觉 - 对话正下方 */
+/* 嗅觉 - 中下方，紫粉色 */
+.嗅觉-sense {
+    background: radial-gradient(ellipse at center, rgba(232, 121, 249, 0.2), rgba(168, 85, 247, 0.25));
+    border-color: rgba(232, 121, 249, 0.45);
+    box-shadow: 
+        0 12px 48px rgba(232, 121, 249, 0.3),
+        inset 0 1px 0 rgba(232, 121, 249, 0.2);
+}
+
 .嗅觉-sense .sense-type {
-    color: rgba(255, 200, 255, 0.7);
+    color: rgba(233, 213, 255, 0.7);
 }
 
 .嗅觉-sense .sense-value {
-    color: rgba(255, 200, 255, 0.9);
-    font-family: 'Georgia', 'Microsoft YaHei', serif;
+    color: rgba(243, 232, 255, 0.95);
+    font-family: 'Noto Sans SC', serif;
+    font-size: 17px;
+    text-shadow: 0 0 15px rgba(232, 121, 249, 0.5);
 }
 
-/* 味觉 - 最底部中央 */
+/* 味觉 - 最底部，绿色 */
+.味觉-sense {
+    background: radial-gradient(ellipse at center, rgba(134, 239, 172, 0.2), rgba(34, 197, 94, 0.25));
+    border-color: rgba(134, 239, 172, 0.4);
+    box-shadow: 
+        0 12px 48px rgba(134, 239, 172, 0.25),
+        inset 0 1px 0 rgba(134, 239, 172, 0.15);
+}
+
 .味觉-sense .sense-type {
-    color: rgba(200, 255, 200, 0.7);
+    color: rgba(187, 247, 208, 0.7);
 }
 
 .味觉-sense .sense-value {
-    color: rgba(200, 255, 200, 0.9);
+    color: rgba(220, 252, 231, 0.95);
     font-weight: 300;
+    font-size: 16px;
+    text-shadow: 0 0 12px rgba(134, 239, 172, 0.4);
 }
 
-/* === 特殊位置标识 === */
-
-/* 听觉左耳 */
-.听觉_0 {
-    /* 左耳位置 (20%, 60%) */
+/* === 悬停效果 - 展开 === */
+.视觉-sense.expanded,
+.视觉-sense.locked,
+.视觉-sense:hover {
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15), rgba(100, 100, 120, 0.3));
+    box-shadow: 
+        0 16px 64px rgba(255, 255, 255, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-/* 听觉右耳 */
-.听觉_1 {
-    /* 右耳位置 (80%, 60%) */
+.听觉-sense.expanded,
+.听觉-sense.locked,
+.听觉-sense:hover {
+    background: radial-gradient(ellipse at center, rgba(99, 179, 237, 0.25), rgba(30, 64, 175, 0.3));
+    box-shadow: 
+        0 16px 64px rgba(99, 179, 237, 0.5),
+        inset 0 1px 0 rgba(99, 179, 237, 0.3);
 }
 
-/* 触觉左手 */
-.触觉_0 {
-    /* 左手位置 (15%, 85%) */
+.触觉-sense.expanded,
+.触觉-sense.locked,
+.触觉-sense:hover {
+    background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.2), rgba(217, 119, 6, 0.25));
+    box-shadow: 
+        0 16px 64px rgba(251, 191, 36, 0.4),
+        inset 0 1px 0 rgba(251, 191, 36, 0.25);
 }
 
-/* 触觉右手 */
-.触觉_1 {
-    /* 右手位置 (85%, 85%) */
+.嗅觉-sense.expanded,
+.嗅觉-sense.locked,
+.嗅觉-sense:hover {
+    background: radial-gradient(ellipse at center, rgba(232, 121, 249, 0.2), rgba(168, 85, 247, 0.25));
+    box-shadow: 
+        0 16px 64px rgba(232, 121, 249, 0.5),
+        inset 0 1px 0 rgba(232, 121, 249, 0.3);
 }
 
-/* === 更新动画 === */
-
-.sense-updated {
-    animation: senseUpdatePulse 1s ease-in-out;
+.味觉-sense.expanded,
+.味觉-sense.locked,
+.味觉-sense:hover {
+    background: radial-gradient(ellipse at center, rgba(134, 239, 172, 0.2), rgba(34, 197, 94, 0.25));
+    box-shadow: 
+        0 16px 64px rgba(134, 239, 172, 0.4),
+        inset 0 1px 0 rgba(134, 239, 172, 0.25);
 }
 
-@keyframes senseUpdatePulse {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-    25% {
-        transform: translate(-50%, -50%) scale(1.05);
-        opacity: 0.7;
+/* === 呼吸效果（感官脉冲） - 仅收起状态 === */
+@keyframes senseBreathe {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1) translateZ(0); /* 保持 GPU 加速 */
+        filter: brightness(1);
     }
     50% {
-        transform: translate(-50%, -50%) scale(1.1);
-        opacity: 0.3;
-    }
-    75% {
         transform: translate(-50%, -50%) scale(1.05);
-        opacity: 0.7;
+        filter: brightness(1.15);
+    }
+}
+
+/* 收起状态的脉冲动画 */
+.dynamic-sense.visible:not(.expanded):not(.locked):not(:hover) {
+    animation: senseBreathe 3s ease-in-out infinite;
+}
+
+/* === 感官粒子效果（装饰） === */
+.dynamic-sense::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: inherit;
+    border-radius: inherit;
+    opacity: 0;
+    filter: blur(20px);
+    z-index: -1;
+    transition: opacity 0.8s ease;
+}
+
+.dynamic-sense:hover::before {
+    opacity: 0.6;
+}
+
+/* === 感官连线效果 === */
+.dynamic-sense::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, currentColor, transparent);
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.sense-updated::after {
+    animation: senseRipple 1.5s ease-out;
+}
+
+@keyframes senseRipple {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 0.8;
     }
     100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
+        width: 300px;
+        height: 300px;
+        opacity: 0;
     }
-}
-
-/* 悬停效果 */
-.dynamic-sense:hover {
-    z-index: 60;
-    background: rgba(0, 0, 0, 0.5);
-}
-
-/* === 详情面板样式（已禁用） === */
-
-.sense-detail-container {
-    display: none !important;  /* 完全隐藏详情面板 */
-}
-
-.sense-detail-card {
-    color: rgba(255, 255, 255, 0.9);
-    font-family: 'Microsoft YaHei', sans-serif;
-}
-
-.detail-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    border-bottom: 1px solid rgba(79, 195, 247, 0.3);
-    padding-bottom: 5px;
-}
-
-.detail-type {
-    font-weight: bold;
-    color: #4fc3f7;
-}
-
-.detail-distance {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.detail-value {
-    font-size: 14px;
-    line-height: 1.4;
-    margin-bottom: 10px;
-    word-wrap: break-word;
-}
-
-.detail-position {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 3px;
-}
-
-.detail-id {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: right;
 }
 
 /* === 响应式设计 === */
 
 /* 平板 */
 @media (max-width: 1024px) {
-    .continuous-sense {
-        max-width: 160px;
-    }
-    
-    .sense-type {
-        font-size: 10px;
+    .dynamic-sense {
+        max-width: 260px;
+        min-width: 160px;
+        padding: 14px 20px;
     }
     
     .sense-value {
-        font-size: 12px;
+        font-size: 14px;
     }
     
-    .视觉-sense .sense-value {
-        font-size: 13px;
+    .sense-type {
+        font-size: 9px;
+        letter-spacing: 2.5px;
     }
 }
 
 /* 手机 */
 @media (max-width: 768px) {
-    .continuous-sense {
-        max-width: 120px;
+    /* 调整容器以避开中央对话区域 */
+    .dynamic-sense {
+        width: 60px;
+        max-width: 60px;
+        min-width: 60px;
+        height: 60px;
+        padding: 8px;
+        border-radius: 50%;
+        box-sizing: border-box;
+    }
+    
+    .dynamic-sense.expanded,
+    .dynamic-sense.locked,
+    .dynamic-sense:hover {
+        width: 150px;
+        max-width: 150px;
+        min-width: 150px;
+        height: auto;
+        padding: 10px 12px;
+        border-radius: 10px;
     }
     
     .sense-type {
-        font-size: 9px;
-        margin-bottom: 2px;
-        letter-spacing: 0.3px;
+        font-size: 8px;
+        letter-spacing: 1.5px;
+        margin-bottom: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .sense-value {
         font-size: 11px;
-        line-height: 1.3;
+        line-height: 1.5;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
-    .视觉-sense .sense-value {
-        font-size: 12px;
+    /* 手机端位置优化 - 更靠边缘，避开对话框 */
+    .视觉-sense {
+        top: 8% !important;
     }
     
-    /* 调整多位置感官的位置，避免屏幕边缘 */
-    .听觉_0 {
-        left: 25% !important;
+    .听觉-sense {
+        top: 25% !important;
     }
     
-    .听觉_1 {
-        left: 75% !important;
+    .触觉-sense {
+        top: 75% !important;
     }
     
-    .触觉_0 {
-        left: 20% !important;
+    .嗅觉-sense {
+        top: 85% !important;
     }
     
-    .触觉_1 {
-        left: 80% !important;
+    .味觉-sense {
+        top: 94% !important;
+    }
+}
+
+/* 小屏手机 */
+@media (max-width: 480px) {
+    .dynamic-sense {
+        width: 50px;
+        max-width: 50px;
+        min-width: 50px;
+        height: 50px;
+        padding: 6px;
+        border-radius: 50%;
+        box-sizing: border-box;
+    }
+    
+    .dynamic-sense.expanded,
+    .dynamic-sense.locked,
+    .dynamic-sense:hover {
+        width: 130px;
+        max-width: 130px;
+        min-width: 130px;
+        height: auto;
+        padding: 8px 10px;
+        border-radius: 8px;
+    }
+    
+    .sense-type {
+        font-size: 7px;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .sense-value {
+        font-size: 10px;
+        line-height: 1.4;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        min-height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* 小屏进一步调整位置 */
+    .视觉-sense {
+        top: 6% !important;
+    }
+    
+    .听觉-sense {
+        top: 20% !important;
+    }
+    
+    .触觉-sense {
+        top: 78% !important;
+    }
+    
+    .嗅觉-sense {
+        top: 88% !important;
+    }
+    
+    .味觉-sense {
+        top: 96% !important;
     }
 }
 
@@ -288,107 +538,28 @@
 
 /* 高对比度模式 */
 @media (prefers-contrast: high) {
-    .continuous-sense {
-        color: rgba(255, 255, 255, 1);
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 1),
-                     0 0 15px rgba(0, 0, 0, 0.8);
-    }
-    
-    .sense-type {
-        color: rgba(255, 255, 255, 0.9);
+    .dynamic-sense {
+        background: rgba(0, 0, 0, 0.95);
+        border: 2px solid currentColor;
     }
     
     .sense-value {
         color: rgba(255, 255, 255, 1);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
     }
 }
 
 /* 减少动画模式 */
 @media (prefers-reduced-motion: reduce) {
-    .continuous-sense {
-        transition: opacity 0.3s ease;
+    .dynamic-sense {
+        transition: opacity 0.5s ease;
     }
     
-    .sense-updated .sense-value {
-        animation: senseUpdatePulseReduced 0.5s ease-in-out;
+    .sense-updated {
+        animation: none;
     }
     
-    @keyframes senseUpdatePulseReduced {
-        0%, 100% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.7;
-        }
-    }
-}
-
-/* 深色模式优化 */
-@media (prefers-color-scheme: dark) {
-    .continuous-sense {
-        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9),
-                     0 0 12px rgba(0, 0, 0, 0.7);
-    }
-}
-
-/* 浅色模式优化 */
-@media (prefers-color-scheme: light) {
-    .continuous-sense {
-        color: rgba(0, 0, 0, 0.9);
-        text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.8),
-                     0 0 10px rgba(255, 255, 255, 0.6);
-    }
-    
-    .sense-type {
-        color: rgba(0, 0, 0, 0.7);
-    }
-    
-    .sense-value {
-        color: rgba(0, 0, 0, 0.9);
-    }
-}
-
-/* 五感更新感叹号提示 */
-.sense-notification {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 20px;
-    height: 20px;
-    background: #4fc3f7;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    color: white;
-    z-index: 100;
-    opacity: 0;
-    transform: scale(0.8);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    box-shadow: 0 2px 8px rgba(79, 195, 247, 0.6);
-    pointer-events: none;
-}
-
-.sense-notification.show {
-    opacity: 1;
-    transform: scale(1);
-    animation: senseNotificationPulse 1.5s ease-in-out infinite;
-}
-
-.sense-notification.fade-out {
-    opacity: 0;
-    transform: scale(0.8);
-}
-
-@keyframes senseNotificationPulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 2px 8px rgba(79, 195, 247, 0.6);
-    }
-    50% {
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(79, 195, 247, 0.8);
+    .dynamic-sense.visible {
+        animation: none;
     }
 }

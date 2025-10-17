@@ -6,10 +6,11 @@
 class StoryManager {
     static instance = null;
     static currentCycle = 1;
-    static maxCycles = 16;
+    static maxCycles = 1; // 目前有一个章节
     static isGameStarted = false;
     static isGameEnded = false;
     static isPlayingDialogue = false; // 防止重复播放对话
+    static isFirstDialogueOfCycle = true; // 标记整个章节的第一个对话
 
     // 剧情数据
     static storyData = {
@@ -27,8 +28,9 @@ class StoryManager {
         console.log('[StoryManager] 正在初始化剧情管理器...');
         
         try {
-            // 初始化剧情数据
-            this.initializeStoryData();
+            // 不在这里初始化剧情数据，等待语言选择后再初始化
+            // this.initializeStoryData();
+            console.log('[StoryManager] 等待语言选择后再加载剧情数据');
             
             // 设置事件监听
             this.setupEventListeners();
@@ -36,7 +38,7 @@ class StoryManager {
             // 初始化单例
             this.instance = this;
             
-            console.log('[StoryManager] ✅ 剧情管理器初始化完成');
+            console.log('[StoryManager] ✅ 剧情管理器初始化完成（数据未加载）');
             return true;
         } catch (error) {
             console.error('[StoryManager] ❌ 初始化失败:', error);
@@ -48,22 +50,24 @@ class StoryManager {
      * 初始化剧情数据
      */
     static initializeStoryData() {
-        // 从EnhancedDeepSkyScript获取对话数据
-        if (typeof EnhancedDeepSkyScript !== 'undefined') {
+        // 从window.EnhancedDeepSkyScript获取对话数据（支持动态语言切换）
+        if (typeof window.EnhancedDeepSkyScript !== 'undefined') {
             this.storyData.cycles = [
-                EnhancedDeepSkyScript.getCycle1(),
-                EnhancedDeepSkyScript.getCycle2(),
-                EnhancedDeepSkyScript.getCycle3(),
-                EnhancedDeepSkyScript.getCycle4(),
-                EnhancedDeepSkyScript.getCycle5(),
-                EnhancedDeepSkyScript.getCycle6(),
-                EnhancedDeepSkyScript.getCycle7(),
-                EnhancedDeepSkyScript.getCycle8(),
-                EnhancedDeepSkyScript.getCycle9()
+                window.EnhancedDeepSkyScript.getCycle1(),
+                window.EnhancedDeepSkyScript.getCycle2(),
+                window.EnhancedDeepSkyScript.getCycle3(),
+                window.EnhancedDeepSkyScript.getCycle4(),
+                window.EnhancedDeepSkyScript.getCycle5(),
+                window.EnhancedDeepSkyScript.getCycle6(),
+                window.EnhancedDeepSkyScript.getCycle7(),
+                window.EnhancedDeepSkyScript.getCycle8(),
+                window.EnhancedDeepSkyScript.getCycle9()
             ];
-            console.log(`[StoryManager] 从EnhancedDeepSkyScript加载了 ${this.storyData.cycles.length} 个剧情周期`);
+            console.log(`[StoryManager] 从window.EnhancedDeepSkyScript加载了 ${this.storyData.cycles.length} 个剧情周期`);
+            console.log(`[StoryManager] Cycle 1 标题: ${this.storyData.cycles[0]?.title}`);
+            console.log(`[StoryManager] Cycle 1 第一句对话: ${this.storyData.cycles[0]?.part1?.dialogues[0]?.text?.substring(0, 30)}...`);
         } else {
-            console.warn('[StoryManager] EnhancedDeepSkyScript未找到，使用空数据');
+            console.warn('[StoryManager] window.EnhancedDeepSkyScript未找到，使用空数据');
             this.storyData.cycles = [];
         }
         
@@ -93,6 +97,10 @@ class StoryManager {
      */
     static startGame() {
         console.log('[StoryManager] 🎮 开始游戏');
+        console.log('[StoryManager] 当前加载的剧情数量:', this.storyData.cycles.length);
+        console.log('[StoryManager] Cycle 1 标题:', this.storyData.cycles[0]?.title);
+        console.log('[StoryManager] Cycle 1 第一句:', this.storyData.cycles[0]?.part1?.dialogues[0]?.text?.substring(0, 40));
+        
         this.isGameStarted = true;
         this.isGameEnded = false;
         this.currentCycle = 1;
@@ -146,8 +154,90 @@ class StoryManager {
         this.currentCycle = cycleNumber;
         console.log(`[StoryManager] 开始周期 ${cycleNumber}`);
 
-        // 播放周期对话
-        this.playCycleDialogue(cycleNumber);
+        // 清除所有五感元素
+        if (window.SimpleSenseSystem) {
+            window.SimpleSenseSystem.clearAllSenses();
+        }
+
+        // 显示章节标题，然后开始对话
+        this.showChapterTitle(cycleNumber);
+    }
+
+    /**
+     * 显示章节标题
+     */
+    static showChapterTitle(cycleNumber) {
+        const cycleData = this.getEnhancedCycleData(cycleNumber);
+        if (!cycleData) return;
+
+        // 创建章节标题覆盖层
+        const titleOverlay = document.createElement('div');
+        titleOverlay.id = 'chapter-title-overlay';
+        titleOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        `;
+
+        const chapterNumber = document.createElement('div');
+        chapterNumber.style.cssText = `
+            font-size: 1.2rem;
+            color: rgba(99, 102, 241, 0.8);
+            margin-bottom: 20px;
+            letter-spacing: 4px;
+            font-weight: 300;
+        `;
+        chapterNumber.textContent = `CYCLE ${cycleNumber}`;
+
+        const chapterTitle = document.createElement('div');
+        chapterTitle.style.cssText = `
+            font-size: 3rem;
+            color: #ffffff;
+            font-weight: 700;
+            text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+            margin-bottom: 15px;
+        `;
+        chapterTitle.textContent = cycleData.title;
+
+        const chapterTheme = document.createElement('div');
+        chapterTheme.style.cssText = `
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 2px;
+            font-weight: 300;
+        `;
+        chapterTheme.textContent = cycleData.theme;
+
+        titleOverlay.appendChild(chapterNumber);
+        titleOverlay.appendChild(chapterTitle);
+        titleOverlay.appendChild(chapterTheme);
+        document.body.appendChild(titleOverlay);
+
+        // 淡入
+        setTimeout(() => {
+            titleOverlay.style.opacity = '1';
+        }, 100);
+
+        // 显示 2.5 秒后淡出
+        setTimeout(() => {
+            titleOverlay.style.opacity = '0';
+            
+            // 淡出完成后移除并开始对话
+            setTimeout(() => {
+                document.body.removeChild(titleOverlay);
+                this.playCycleDialogue(cycleNumber);
+            }, 800);
+        }, 2500);
     }
 
     /**
@@ -187,14 +277,6 @@ class StoryManager {
         // 五感系统已移至IndependentSenseSystem
     }
 
-    /**
-     * 初始化五感显示
-     */
-    static initializeSenses() {
-        console.log('[StoryManager] 初始化五感显示');
-        
-        // 五感系统已移至IndependentSenseSystem
-    }
 
     /**
      * 触发视觉恢复
@@ -356,6 +438,24 @@ class StoryManager {
         } catch (error) {
             console.log('[StoryManager] 循环完成音效播放失败:', error);
         }
+    }
+
+    /**
+     * 重新开始当前章节（用于死亡后重生）
+     */
+    static restartCurrentCycle() {
+        console.log(`[StoryManager] 🔄 重新开始章节 ${this.currentCycle}`);
+        
+        // 清除五感显示
+        if (window.SimpleSenseSystem) {
+            window.SimpleSenseSystem.clearAllSenses();
+        }
+        
+        // 重置对话系统状态
+        this.isPlayingDialogue = false;
+        
+        // 直接播放对话，不显示章节标题
+        this.playCycleDialogue(this.currentCycle);
     }
 
     /**
@@ -562,6 +662,9 @@ class StoryManager {
     static playEnhancedDialogueSequence(cycleData) {
         console.log('[StoryManager] 播放增强版对话序列');
         
+        // 标记整个章节的第一个对话
+        this.isFirstDialogueOfCycle = true;
+        
         // 按部分播放对话
         const parts = ['part1', 'part2', 'part3', 'part4'];
         let currentPartIndex = 0;
@@ -620,21 +723,35 @@ class StoryManager {
             // 设置当前对话对象
             this.storyData.currentDialogue = dialogue;
             
-            // 显示对话
-            if (typeof DialogueSystem !== 'undefined') {
-                DialogueSystem.showDialogue(dialogue).then(() => {
-                    // 对话显示完成后，处理五感更新
-                    this.handleSenseUpdates(dialogue);
-                    
-                    // 继续下一个对话
+            // 判断是否是章节第一个对话
+            const isFirstOfCycle = this.isFirstDialogueOfCycle;
+            if (isFirstOfCycle) {
+                this.isFirstDialogueOfCycle = false; // 标记已处理
+            }
+            
+            // 先更新五感，再显示对话
+            this.handleSenseUpdates(dialogue, isFirstOfCycle);
+            
+            // 如果是第一个对话，等待五感逐个出现后再显示对话
+            const senseDelay = isFirstOfCycle ? 3000 : 0;
+            
+            setTimeout(() => {
+                // 显示对话
+                if (typeof DialogueSystem !== 'undefined') {
+                    DialogueSystem.showDialogue(dialogue).then(() => {
+                        // 对话打字完成后等待
+                        const nextDialogueDelay = isFirstOfCycle ? 1500 : 800;
+                        setTimeout(() => {
+                            currentDialogueIndex++;
+                            playNextDialogue();
+                        }, nextDialogueDelay);
+                    });
+                } else {
+                    console.warn('[StoryManager] DialogueSystem 未加载');
                     currentDialogueIndex++;
                     playNextDialogue();
-                });
-            } else {
-                console.warn('[StoryManager] DialogueSystem 未加载');
-                currentDialogueIndex++;
-                playNextDialogue();
-            }
+                }
+            }, senseDelay);
         };
         
         // 开始播放第一个对话
@@ -730,8 +847,9 @@ class StoryManager {
     /**
      * 处理五感更新数组（新格式 - 支持多实例）
      * @param {Object} dialogue - 对话对象
+     * @param {boolean} isFirstDialogue - 是否是第一个对话
      */
-    static handleSenseUpdates(dialogue) {
+    static handleSenseUpdates(dialogue, isFirstDialogue = false) {
         // 处理新格式：senseUpdates 数组
         if (dialogue.senseUpdates && Array.isArray(dialogue.senseUpdates)) {
             console.log(`[StoryManager] 处理五感更新数组，共 ${dialogue.senseUpdates.length} 个操作`);
@@ -775,12 +893,79 @@ class StoryManager {
         // 处理旧格式：updateSenses 对象
         else if (dialogue.updateSenses) {
             console.log('[StoryManager] 处理旧格式五感更新（updateSenses对象）');
-            Object.keys(dialogue.updateSenses).forEach(senseType => {
-                this.updateSingleSense(senseType, dialogue.updateSenses[senseType]);
-            });
+            
+            if (isFirstDialogue) {
+                // 第一次显示：逐个出现，固定顺序
+                this.showSensesSequentially(dialogue.updateSenses);
+            } else {
+                // 后续更新：立即显示
+                Object.keys(dialogue.updateSenses).forEach(senseKey => {
+                    const senseValue = dialogue.updateSenses[senseKey];
+                    
+                    // 检查是否是左右分离格式（听觉1/听觉2 或 触觉1/触觉2）
+                    if (senseKey.match(/^(听觉|触觉)[12]$/)) {
+                        const baseSense = senseKey.substring(0, 2);
+                        const index = parseInt(senseKey.substring(2)) - 1;
+                        
+                        if (typeof SimpleSenseSystem !== 'undefined') {
+                            const position = SimpleSenseSystem.constructor.getPositionByIndex(baseSense, index);
+                            if (position) {
+                                const id = `${baseSense}_${index}`;
+                                SimpleSenseSystem.createSense(baseSense, senseValue, position, 50, id);
+                            }
+                        }
+                    } else {
+                        this.updateSingleSense(senseKey, senseValue);
+                    }
+                });
+            }
         }
     }
-
+    
+    /**
+     * 顺序显示五感（第一次）
+     * 顺序：听觉1 → 嗅觉 → 听觉2 → 触觉1 → 味觉 → 触觉2
+     */
+    static showSensesSequentially(updateSenses) {
+        const displayOrder = ['听觉1', '嗅觉', '听觉2', '触觉1', '味觉', '触觉2'];
+        const senseKeys = Object.keys(updateSenses);
+        
+        // 按顺序显示
+        let delay = 0;
+        displayOrder.forEach((key) => {
+            if (updateSenses[key]) {
+                setTimeout(() => {
+                    const senseValue = updateSenses[key];
+                    
+                    if (key.match(/^(听觉|触觉)[12]$/)) {
+                        const baseSense = key.substring(0, 2);
+                        const index = parseInt(key.substring(2)) - 1;
+                        
+                        if (typeof SimpleSenseSystem !== 'undefined') {
+                            const position = SimpleSenseSystem.constructor.getPositionByIndex(baseSense, index);
+                            if (position) {
+                                const id = `${baseSense}_${index}`;
+                                SimpleSenseSystem.createSense(baseSense, senseValue, position, 50, id);
+                            }
+                        }
+                    } else {
+                        this.updateSingleSense(key, senseValue);
+                    }
+                }, delay);
+                delay += 500; // 每个五感间隔0.5秒
+            }
+        });
+        
+        // 处理不在顺序列表中的其他五感
+        senseKeys.forEach(key => {
+            if (!displayOrder.includes(key)) {
+                setTimeout(() => {
+                    this.updateSingleSense(key, updateSenses[key]);
+                }, delay);
+                delay += 500;
+            }
+        });
+    }
 }
 
 // 将StoryManager添加到全局作用域
